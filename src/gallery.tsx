@@ -1,33 +1,31 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useLoader } from "@react-three/fiber";
 import { TextureLoader } from "three";
 import { useControls } from "leva";
 import { useHelper, MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import { Perf } from "r3f-perf";
+import { useSpring, animated } from "@react-spring/three";
+import Camera from "./Camera";
+import Football from "./Football";
+import { Physics, RigidBody } from "@react-three/rapier";
 
 // Liste des images pour les cadres
 const images = [
-  "./447.jpg",
-  "./car.jpg",
-  "./chairs.jpg",
-  "./lac.jpg",
-  "./montain.jpg",
-  "./pizza.jpg",
-  "./purple.jpg",
-  "./restaurant.jpg",
-  "./spain.jpg",
-  "./vegetation.jpg",
+  "./images/447.jpg",
+  "./images/car.jpg",
+  "./images/chairs.jpg",
+  "./images/lac.jpg",
+  "./images/montain.jpg",
+  "./images/pizza.jpg",
+  "./images/purple.jpg",
+  "./images/restaurant.jpg",
+  "./images/spain.jpg",
+  "./images/vegetation.jpg",
 ];
 
-const woodTexture = {
-  arm: "./wood_table_001_1k/wood_table_001_arm_1k.jpg",
-  diff: "./wood_table_001_1k/wood_table_001_diff_1k.jpg",
-  nor_gl: "./wood_table_001_1k/wood_table_001_nor_gl_1k.jpg",
-};
-
 export default function Gallery() {
-  const { numElements, radius } = useControls({
+  const { numElements, radius } = useControls("gallery", {
     numElements: { value: images.length, min: 1, max: 50, step: 1 },
     radius: { value: 7, min: 5, max: 20, step: 1 },
   });
@@ -40,12 +38,29 @@ export default function Gallery() {
     penumbra: { value: 1, min: 0, max: 1, step: 0.01, label: "Pénombre" },
   });
 
-  const armTexture = useLoader(TextureLoader, woodTexture.arm);
-  const diffTexture = useLoader(TextureLoader, woodTexture.diff);
-  const nor_glTexture = useLoader(TextureLoader, woodTexture.nor_gl);
+  const leftArrowTexture = useLoader(TextureLoader, "./images/left-arrow.png");
+  const rightArrowTexture = useLoader(TextureLoader, "./images/right-arrow.png");
 
-  const leftArrowTexture = useLoader(TextureLoader, "./left-arrow.png");
-  const rightArrowTexture = useLoader(TextureLoader, "./right-arrow.png");
+  const textures = useMemo(() => {
+    console.log('new textures');
+    // Utilisation de useMemo pour charger les textures une seule fois
+    return images.map((image) => new THREE.TextureLoader().load(image));
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        rotateGallery(-1);
+      } else if (event.key === "ArrowRight") {
+        rotateGallery(1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   const generatePositionsAndRotations = () => {
     const positionsAndRotations: {
@@ -53,11 +68,10 @@ export default function Gallery() {
       rotation: [number, number, number];
     }[] = [];
     for (let i = 0; i < numElements; i++) {
-      const angle = (i / numElements) * Math.PI * 2 ; // Appliquer le décalage ici
+      const angle = (i / numElements) * Math.PI * 2;
       const x = Math.sin(angle) * radius;
       const z = Math.cos(angle) * radius;
-  
-      // Rotation pour faire face au centre
+
       const rotationY = Math.atan2(x, z) + Math.PI;
       positionsAndRotations.push({
         position: [x, 0.2, z],
@@ -69,29 +83,40 @@ export default function Gallery() {
 
   const positionsAndRotations = generatePositionsAndRotations();
 
-  const spotLight = useRef<THREE.SpotLight>(
-    null
-  ) as React.MutableRefObject<THREE.SpotLight>;
+  const spotLight = useRef<THREE.SpotLight>(null) as React.MutableRefObject<THREE.SpotLight>;
   useHelper(spotLight, THREE.SpotLightHelper, 1);
 
   const gallery = useRef<THREE.Group>(null);
+
   const [targetRotation, setTargetRotation] = useState(0);
 
   useFrame(() => {
     if (gallery.current) {
-      gallery.current.rotation.y += (targetRotation - gallery.current.rotation.y) * 0.025; // Animation fluide
+      gallery.current.rotation.y += (targetRotation - gallery.current.rotation.y) * 0.025;
     }
   });
-  
+
   const rotateGallery = (direction: number) => {
     const angleStep = (Math.PI * 2) / numElements;
     setTargetRotation((prev) => prev + direction * angleStep);
   };
 
+  const [hoveredArrows, setHoveredArrows] = useState({
+    left: Array(numElements).fill(false),
+    right: Array(numElements).fill(false),
+  });
+
+  // Créer une animation avec useSpring pour les flèches
+  const arrowStyle = (hovered: boolean) =>
+    useSpring({
+      scale: hovered ? [1.5, 1.5, 1] : [1, 1, 1],
+      emissiveIntensity: hovered ? 1 : 0,
+      config: { tension: 300, friction: 20 }, // Ajuster la fluidité
+    });
+
   return (
     <>
-    <Perf position="top-left"/>
-      {/* <ambientLight intensity={0.5} /> */}
+      <Perf position="top-left" />
       <spotLight
         position={[0, 2, 0]}
         color={spotlightSettings.color}
@@ -106,56 +131,102 @@ export default function Gallery() {
           return target;
         })()}
       />
-      <group ref={gallery} >
+      <group ref={gallery}>
         {positionsAndRotations.map((item, index) => {
-          const texture = useLoader(TextureLoader, images[index] ?? images[0]);
+          const texture = textures[index] ?? textures[0]; // Utiliser la texture en cache
+
+          const leftArrowAnim = arrowStyle(hoveredArrows.left[index]);
+          const rightArrowAnim = arrowStyle(hoveredArrows.right[index]);
 
           return (
-            
-              <group
-                key={index}
-                position={item.position}
-                rotation={item.rotation}
+            <group key={index} position={item.position} rotation={item.rotation}>
+              {/* Flèche gauche */}
+              <animated.mesh
+                position={[-1.8, 0, 0.5]}
+                onPointerOver={() => {
+                  setHoveredArrows((prev) => {
+                    const newHovered = { ...prev };
+                    newHovered.left[index] = true;
+                    return newHovered;
+                  });
+                }}
+                onPointerOut={() => {
+                  setHoveredArrows((prev) => {
+                    const newHovered = { ...prev };
+                    newHovered.left[index] = false;
+                    return newHovered;
+                  });
+                }}
+                onClick={() => rotateGallery(-1)}
+                scale={leftArrowAnim.scale.to((x, y, z) => [x, y, z] as [number, number, number])}
               >
-                <mesh
-                  position={[-1.8, 0, 0.5]}
-                  onClick={() => rotateGallery(-1)}
-                >
-                  <boxGeometry args={[0.3, 0.3, 0.001]} />
-                  <meshStandardMaterial map={leftArrowTexture} transparent />
-                </mesh>
-                {/* Cadre autour de la box avec la texture choisie */}
-                <mesh>
-                  <boxGeometry args={[3.2, 2.2, 0.1]} />
-                  <meshStandardMaterial
-                    color={"#333333"}
-                  />
-                </mesh>
-                {/* Image à l'intérieur du cadre */}
-                <mesh position={[0, 0, 0.05]}>
-                  <boxGeometry args={[3, 2, 0.1]} />
-                  <meshStandardMaterial map={texture} />
-                </mesh>
+                <boxGeometry args={[0.3, 0.3, 0.001]} />
+                <animated.meshStandardMaterial
+                  map={leftArrowTexture}
+                  emissive={new THREE.Color(0.5, 0.5, 0.5)}
+                  emissiveIntensity={leftArrowAnim.emissiveIntensity}
+                  transparent={true}
+                />
+              </animated.mesh>
 
-                <mesh position={[1.8, 0, 0.5]} onClick={() => rotateGallery(1)}>
-                  <boxGeometry args={[0.3, 0.3, 0.001]} />
-                  <meshStandardMaterial map={rightArrowTexture} transparent />
-                </mesh>
-              </group>
-            
+              {/* Cadre image */}
+              <mesh>
+                <boxGeometry args={[3.2, 2.2, 0.1]} />
+                <meshStandardMaterial color={"#333333"} />
+              </mesh>
+
+              {/* Image */}
+              <mesh position={[0, 0, 0.05]}>
+                <boxGeometry args={[3, 2, 0.1]} />
+                <meshStandardMaterial map={texture} />
+              </mesh>
+
+              {/* Flèche droite */}
+              <animated.mesh
+                position={[1.8, 0, 0.5]}
+                onPointerOver={() => {
+                  setHoveredArrows((prev) => {
+                    const newHovered = { ...prev };
+                    newHovered.right[index] = true;
+                    return newHovered;
+                  });
+                }}
+                onPointerOut={() => {
+                  setHoveredArrows((prev) => {
+                    const newHovered = { ...prev };
+                    newHovered.right[index] = false;
+                    return newHovered;
+                  });
+                }}
+                onClick={() => rotateGallery(1)}
+                scale={rightArrowAnim.scale.to((x, y, z) => [x, y, z] as [number, number, number])}
+              >
+                <boxGeometry args={[0.3, 0.3, 0.001]} />
+                <animated.meshStandardMaterial
+                  map={rightArrowTexture}
+                  transparent
+                  emissive={new THREE.Color(0.5, 0.5, 0.5)}
+                  emissiveIntensity={rightArrowAnim.emissiveIntensity}
+                />
+              </animated.mesh>
+            </group>
           );
         })}
       </group>
       {/* Reflet du sol */}
-      <mesh position-y={-1} scale={100} rotation-x={-Math.PI / 2}>
-        <planeGeometry />
-        <MeshReflectorMaterial
-          resolution={1024}
-          mirror={1}
-          blur={[1000, 1000]}
-          mixBlur={0}
-        />
-      </mesh>
+      <Physics >
+        <RigidBody type="fixed">
+          <mesh position-y={-1} scale={100} rotation-x={-Math.PI / 2}>
+            <planeGeometry />
+            <MeshReflectorMaterial
+              resolution={1024}
+              mirror={1}
+            />
+          </mesh>
+        </RigidBody>
+        <Camera />
+        <Football />
+      </Physics>
     </>
   );
 }
