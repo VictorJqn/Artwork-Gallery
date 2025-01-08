@@ -9,6 +9,8 @@ import { useSpring, animated } from "@react-spring/three";
 import Camera from "./Camera";
 import Football from "./Football";
 import { Physics, RigidBody } from "@react-three/rapier";
+import loadingManager from './LoadingManager';  // Importer votre gestionnaire de chargement
+
 
 // Liste des images pour les cadres
 const images = [
@@ -42,10 +44,10 @@ export default function Gallery() {
   const rightArrowTexture = useLoader(TextureLoader, "./images/right-arrow.png");
 
   const textures = useMemo(() => {
-    console.log('new textures');
-    // Utilisation de useMemo pour charger les textures une seule fois
-    return images.map((image) => new THREE.TextureLoader().load(image));
-  }, []);
+    return images.map((image) => {
+      return new THREE.TextureLoader(loadingManager).load(image);
+    });
+  }, []); 
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -214,7 +216,7 @@ export default function Gallery() {
         })}
       </group>
       {/* Reflet du sol */}
-      <Physics >
+      <Physics>
         <RigidBody type="fixed">
           <mesh position-y={-1} scale={100} rotation-x={-Math.PI / 2}>
             <planeGeometry />
