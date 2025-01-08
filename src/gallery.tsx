@@ -90,9 +90,9 @@ export default function Gallery() {
 
   const [targetRotation, setTargetRotation] = useState(0);
 
-  useFrame(() => {
+  useFrame((state, delta) => {
     if (gallery.current) {
-      gallery.current.rotation.y += (targetRotation - gallery.current.rotation.y) * 0.025;
+      gallery.current.rotation.y += (targetRotation - gallery.current.rotation.y) * ( delta * 2.5);
     }
   });
 

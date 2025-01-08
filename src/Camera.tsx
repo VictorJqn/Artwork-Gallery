@@ -11,6 +11,7 @@ export default function Camera() {
 
   return (
     <>
+     
       <primitive
         object={cameraModel.scene}
         position={[-1.8, -1, 6]}

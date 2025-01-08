@@ -9,7 +9,7 @@ export default function EntryScene() {
   useFrame(() => {
     if (textRef.current) {
       // Faire pointer le texte vers la caméra
-      textRef.current.lookAt(new THREE.Vector3(-10, 15, -20 ));
+      textRef.current.lookAt(new THREE.Vector3(-10, 15, -20));
     }
   });
 
@@ -18,9 +18,9 @@ export default function EntryScene() {
         <Text3D
           ref={textRef} // Attacher la référence
           font="./fonts/helvetiker_regular.typeface.json"
-          position={[0.25 , 3.3 , -5 ]} // Positionner le texte
+          position={[0.25, 3.3, -5]} // Positionner le texte
         >
-          <meshBasicMaterial color="white"  />
+          <meshBasicMaterial color="white" />
           Portfolio - Jqn.art
         </Text3D>
     </>

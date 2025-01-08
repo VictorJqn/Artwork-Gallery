@@ -38,10 +38,10 @@ export default function CameraTransition() {
     };
   }, [isEntryScene]);
 
-  useFrame(() => {
+  useFrame((state, delta) => {
     if (cameraRef.current && isTransitioningRef.current) {
       // Transition de position
-      cameraRef.current.position.lerp(targetPosition, 0.01        );
+      cameraRef.current.position.lerp(targetPosition, delta * 1.5);
 
       // Arrêter la transition lorsqu'on atteint la cible
       if (cameraRef.current.position.distanceTo(targetPosition) < 0.1) {

@@ -6,6 +6,7 @@ import { Leva } from "leva";
 import Gallery from "./gallery.tsx";
 import CameraTransition from "./CameraTransition"; 
 import EntryScene from "./EntryScene.tsx";
+import { OrbitControls } from "@react-three/drei";
 
 const App = () => {
   return (
@@ -16,6 +17,7 @@ x        <color attach="background" args={["#000000"]} />
         <Gallery />
         <CameraTransition /> 
         <EntryScene />
+        <OrbitControls />
       </Canvas>
     </StrictMode>
   );
