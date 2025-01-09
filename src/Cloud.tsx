@@ -8,7 +8,7 @@ export function Cloud() {
   const ambientFlash = useRef<THREE.AmbientLight | null>(null);
   console.log(Math.random())
 
-  useFrame((state, delta) => {
+  useFrame(() => {
     if (flash.current) {
       if ((Math.random() > 0.99) || flash.current.intensity > 0) {
           if (flash.current.intensity < 100) {

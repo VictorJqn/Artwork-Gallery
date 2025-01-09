@@ -1,16 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useFrame, useLoader } from "@react-three/fiber";
+import { useFrame, useLoader, useThree } from "@react-three/fiber";
 import { TextureLoader } from "three";
 import { useControls } from "leva";
-import { useHelper, MeshReflectorMaterial } from "@react-three/drei";
+import { MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
 import { Perf } from "r3f-perf";
 import { useSpring, animated } from "@react-spring/three";
 import Camera from "./Camera";
-import Football from "./Football";
 import { Physics, RigidBody } from "@react-three/rapier";
-import loadingManager from './LoadingManager';  // Importer votre gestionnaire de chargement
-
+import loadingManager from "./LoadingManager"; // Importer votre gestionnaire de chargement
+import PottedPlant from "./PottedPlant";
+import TextGallery from "./TextGallery";
 
 // Liste des images pour les cadres
 const images = [
@@ -33,7 +33,6 @@ export default function Gallery() {
   });
 
   const spotlightSettings = useControls("spotLight", {
-    color: { value: "white", label: "Couleur" },
     intensity: { value: 100, min: 0, max: 1000, step: 1, label: "Intensité" },
     distance: { value: 10, min: 0, max: 100, step: 1, label: "Distance" },
     angle: { value: 0.65, min: 0, max: 1, step: 0.01, label: "Angle" },
@@ -41,13 +40,16 @@ export default function Gallery() {
   });
 
   const leftArrowTexture = useLoader(TextureLoader, "./images/left-arrow.png");
-  const rightArrowTexture = useLoader(TextureLoader, "./images/right-arrow.png");
+  const rightArrowTexture = useLoader(
+    TextureLoader,
+    "./images/right-arrow.png"
+  );
 
   const textures = useMemo(() => {
     return images.map((image) => {
       return new THREE.TextureLoader(loadingManager).load(image);
     });
-  }, []); 
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -85,18 +87,32 @@ export default function Gallery() {
 
   const positionsAndRotations = generatePositionsAndRotations();
 
-  const spotLight = useRef<THREE.SpotLight>(null) as React.MutableRefObject<THREE.SpotLight>;
-  useHelper(spotLight, THREE.SpotLightHelper, 1);
+  const spotLight = useRef<THREE.SpotLight>(
+    null
+  ) as React.MutableRefObject<THREE.SpotLight>;
 
   const gallery = useRef<THREE.Group>(null);
 
   const [targetRotation, setTargetRotation] = useState(0);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (gallery.current) {
-      gallery.current.rotation.y += (targetRotation - gallery.current.rotation.y) * ( delta * 2.5);
+      gallery.current.rotation.y +=
+        (targetRotation - gallery.current.rotation.y) * (delta * 2.5);
     }
   });
+
+  const { scene } = useThree(); // Accès à la scène principale
+  const spotLightTarget = useMemo(() => new THREE.Object3D(), []); // Memo pour conserver la même instance
+
+  useEffect(() => {
+    // Ajouter la target à la scène une seule fois
+    scene.add(spotLightTarget);
+    spotLightTarget.position.set(0, 1, 5); // Définir la position initiale
+    return () => {
+      scene.remove(spotLightTarget); // Nettoyage lors du démontage du composant
+    };
+  }, [scene]);
 
   const rotateGallery = (direction: number) => {
     const angleStep = (Math.PI * 2) / numElements;
@@ -121,17 +137,12 @@ export default function Gallery() {
       <Perf position="top-left" />
       <spotLight
         position={[0, 2, 0]}
-        color={spotlightSettings.color}
         intensity={spotlightSettings.intensity}
         distance={spotlightSettings.distance}
         angle={spotlightSettings.angle}
         penumbra={spotlightSettings.penumbra}
         ref={spotLight}
-        target={(() => {
-          const target = new THREE.Object3D();
-          target.position.set(0, 1, 5);
-          return target;
-        })()}
+        target={spotLightTarget} // Liaison correcte de la target
       />
       <group ref={gallery}>
         {positionsAndRotations.map((item, index) => {
@@ -141,7 +152,11 @@ export default function Gallery() {
           const rightArrowAnim = arrowStyle(hoveredArrows.right[index]);
 
           return (
-            <group key={index} position={item.position} rotation={item.rotation}>
+            <group
+              key={index}
+              position={item.position}
+              rotation={item.rotation}
+            >
               {/* Flèche gauche */}
               <animated.mesh
                 position={[-1.8, 0, 0.5]}
@@ -160,7 +175,9 @@ export default function Gallery() {
                   });
                 }}
                 onClick={() => rotateGallery(-1)}
-                scale={leftArrowAnim.scale.to((x, y, z) => [x, y, z] as [number, number, number])}
+                scale={leftArrowAnim.scale.to(
+                  (x, y, z) => [x, y, z] as [number, number, number]
+                )}
               >
                 <boxGeometry args={[0.3, 0.3, 0.001]} />
                 <animated.meshStandardMaterial
@@ -201,7 +218,9 @@ export default function Gallery() {
                   });
                 }}
                 onClick={() => rotateGallery(1)}
-                scale={rightArrowAnim.scale.to((x, y, z) => [x, y, z] as [number, number, number])}
+                scale={rightArrowAnim.scale.to(
+                  (x, y, z) => [x, y, z] as [number, number, number]
+                )}
               >
                 <boxGeometry args={[0.3, 0.3, 0.001]} />
                 <animated.meshStandardMaterial
@@ -220,14 +239,13 @@ export default function Gallery() {
         <RigidBody type="fixed">
           <mesh position-y={-1} scale={100} rotation-x={-Math.PI / 2}>
             <planeGeometry />
-            <MeshReflectorMaterial
-              resolution={1024}
-              mirror={1}
-            />
+            <MeshReflectorMaterial resolution={1024} mirror={1} />
           </mesh>
         </RigidBody>
         <Camera />
-        <Football />
+        {/* <Football /> */}
+        <PottedPlant />
+        <TextGallery />
       </Physics>
     </>
   );

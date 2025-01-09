@@ -10,8 +10,8 @@ export default function Rain() {
 
   // Contrôles de Leva pour la pluie
   const rainParameters = useControls("rain", {
-    speed: { value: 0.14, min: 0.001, max: 0.4, step: 0.01 },
-    size: { value: 0.05, min: 0.001, max: 0.5, step: 0.01 },
+    speed: { value: 0.4, min: 0.001, max: 0.7, step: 0.01 },
+    size: { value: 0.06, min: 0.001, max: 0.5, step: 0.01 },
   });
 
   // Génération des positions initiales et des vitesses des gouttes de pluie
@@ -32,7 +32,7 @@ export default function Rain() {
   }, [rainParameters.speed]);
 
   // Animation des gouttes de pluie
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (rainRef.current) {
       const positions = rainRef.current.geometry.attributes.position
         .array as Float32Array;

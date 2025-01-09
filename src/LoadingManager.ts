@@ -2,17 +2,16 @@ import * as THREE from 'three';
 
 const loadingManager = new THREE.LoadingManager();
 
-loadingManager.onStart = (url, itemsLoaded, itemsTotal) => {
+loadingManager.onStart = () => {
 };
 
 loadingManager.onLoad = () => {
 };
 
-loadingManager.onProgress = (url, itemsLoaded, itemsTotal) => {
-  const progress = (itemsLoaded / itemsTotal) * 100;
+loadingManager.onProgress = () => {
 };
 
-loadingManager.onError = (url) => {
+loadingManager.onError = () => {
 };
 
 export default loadingManager;

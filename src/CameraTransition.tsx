@@ -26,7 +26,7 @@ export default function CameraTransition() {
           cameraRef.current?.lookAt(0, 0, 5);
         } else {
           setIsEntryScene(true);
-          setTargetPosition(new THREE.Vector3(-10, 10, -10));
+          setTargetPosition(new THREE.Vector3(0, 10, -20));
         }
       }
     };
@@ -38,7 +38,7 @@ export default function CameraTransition() {
     };
   }, [isEntryScene]);
 
-  useFrame((state, delta) => {
+  useFrame((_, delta) => {
     if (cameraRef.current && isTransitioningRef.current) {
       // Transition de position
       cameraRef.current.position.lerp(targetPosition, delta * 1.5);
@@ -56,7 +56,7 @@ export default function CameraTransition() {
       <PerspectiveCamera
         ref={cameraRef}
         makeDefault // Remplace la caméra par défaut du Canvas
-        position={[-10, 10, -10]} // Position initiale
+        position={[0, 10, -20]} // Position initiale
         fov={75} // Champ de vision
       />
       
