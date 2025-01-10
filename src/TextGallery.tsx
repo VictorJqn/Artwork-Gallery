@@ -18,6 +18,7 @@ export default function TextGallery() {
       step: 0.01,
     },
   });
+  
   return (
     <Text3D
       font="./fonts/Ephesis_Regular.json"

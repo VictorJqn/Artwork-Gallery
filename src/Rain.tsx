@@ -8,50 +8,27 @@ export default function Rain() {
   const rainRef = useRef<THREE.Points>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Contrôles de Leva pour la pluie
   const rainParameters = useControls("rain", {
-    speed: { value: 0.4, min: 0.001, max: 0.7, step: 0.01 },
-    size: { value: 0.06, min: 0.001, max: 0.5, step: 0.01 },
+    speed: { value: 0.56, min: 0.001, max: 0.7, step: 0.01 },
+    size: { value: 0.05, min: 0.001, max: 0.5, step: 0.01 },
   });
 
-  // Génération des positions initiales et des vitesses des gouttes de pluie
   const { positions, velocities } = useMemo(() => {
     const count = 1000; // Nombre de gouttes
     const positions = new Float32Array(count * 3);
     const velocities = new Float32Array(count);
 
-    // Initialisation des positions et des vitesses des gouttes
     for (let i = 0; i < count; i++) {
-      positions[i * 3 + 0] = (Math.random() - 0.5) * 50; // X entre -width/2 et width/2
-      positions[i * 3 + 1] = Math.random() * 50; // Y entre 0 et height
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 50; // Z entre -depth/2 et depth/2
-      velocities[i] = Math.random() * 0.2 + rainParameters.speed; // Vitesse de chute
+      positions[i * 3 + 0] = (Math.random() - 0.5) * 50;
+      positions[i * 3 + 1] = Math.random() * 50; 
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 50; 
+      velocities[i] = Math.random() * 0.2 + rainParameters.speed; 
     }
 
     return { positions, velocities };
   }, [rainParameters.speed]);
 
-  // Animation des gouttes de pluie
-  useFrame((_, delta) => {
-    if (rainRef.current) {
-      const positions = rainRef.current.geometry.attributes.position
-        .array as Float32Array;
-
-      for (let i = 0; i < positions.length / 3; i++) {
-        // Mise à jour de la position Y
-        positions[i * 3 + 1] -= velocities[i] * (delta * 100);
-
-        // Si la goutte atteint Y = -1, réinitialiser sa position
-        if (positions[i * 3 + 1] < -2) {
-          positions[i * 3 + 1] = Math.random() * 50; // Réinitialiser Y entre 0 et height
-          positions[i * 3 + 0] = (Math.random() - 0.5) * 50; // Réinitialiser X entre -width/2 et width/2
-          positions[i * 3 + 2] = (Math.random() - 0.5) * 50; // Réinitialiser Z entre -depth/2 et depth/2
-        }
-      }
-
-      rainRef.current.geometry.attributes.position.needsUpdate = true;
-    }
-  });
+ 
 
   useEffect(() => {
     if (audioRef.current) {
@@ -61,11 +38,28 @@ export default function Rain() {
       });
     }
   }, []);
+
+   // Animation des gouttes de pluie
+   useFrame((_, delta) => {
+    if (rainRef.current) {
+      const positions = rainRef.current.geometry.attributes.position
+        .array as Float32Array;
+
+      for (let i = 0; i < positions.length / 3; i++) {
+        positions[i * 3 + 1] -= velocities[i] * (delta * 100);
+
+        if (positions[i * 3 + 1] < -2) {
+          positions[i * 3 + 1] = Math.random() * 50; 
+          positions[i * 3 + 0] = (Math.random() - 0.5) * 50; 
+          positions[i * 3 + 2] = (Math.random() - 0.5) * 50; 
+        }
+      }
+
+      rainRef.current.geometry.attributes.position.needsUpdate = true;
+    }
+  });
   return (
     <>
-      {/* Son de pluie */}
-      {/* Mettre le bon chemin du fichier audio */}
-      {/* Pluie */}
       <Points ref={rainRef} positions={positions}>
         <PointMaterial
           transparent

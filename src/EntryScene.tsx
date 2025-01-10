@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  Text3D,
-  useMatcapTexture,
-} from "@react-three/drei";
+import { Text3D, useMatcapTexture } from "@react-three/drei";
 import * as THREE from "three";
 import { useControls } from "leva";
 
 export default function EntryScene() {
   const textRef = useRef<THREE.Mesh>(null);
   const textSubRef = useRef<THREE.Mesh>(null);
+
+  const [textWidth, setTextWidth] = useState<number>(0);
+  const [textSubWidth, setTextSubWidth] = useState<number>(0);
 
   const [matcapTexture] = useMatcapTexture("495CA6_CCD2E6_A5B1D8_1E2852");
 
@@ -31,62 +31,64 @@ export default function EntryScene() {
     },
   });
 
-  const [textWidth, setTextWidth] = useState<number>(0);
-  const [textSubWidth, setTextSubWidth] = useState<number>(0);
-
   useEffect(() => {
     if (textRef.current) {
-      // Calculer la largeur du texte
       const boundingBox = new THREE.Box3().setFromObject(textRef.current);
       const width = boundingBox.max.x - boundingBox.min.x;
       setTextWidth(width);
     }
 
-    if(textSubRef.current) {
-      // Calculer la largeur du texte
+    if (textSubRef.current) {
       const boundingBox = new THREE.Box3().setFromObject(textSubRef.current);
       const width = boundingBox.max.x - boundingBox.min.x;
       setTextSubWidth(width);
     }
   }, [textSettings]);
 
-
-
   return (
     <>
-      <group rotation-y={Math.PI * textSettings.rototationY} rotation-x={Math.PI * textSettings.rotationX}>
-          {/* Texte principal */}
-          <Text3D
-            ref={textRef}
-            font="./fonts/helvetiker_regular.typeface.json"
-            position={[-textWidth / 2, textSettings.position[1], textSettings.position[2]]} // Position ajustée
-            curveSegments={12}
-            bevelEnabled
-            bevelThickness={0.02}
-            bevelSize={0.02}
-            bevelOffset={0}
-            bevelSegments={5}
-            scale={1.5}
-          >
-            <meshMatcapMaterial matcap={matcapTexture} />
-            Portfolio - @Jqn.art
-          </Text3D>
-          {/* Texte secondaire */}
-          <Text3D
-            ref={textSubRef}
-            font="./fonts/helvetiker_regular.typeface.json"
-            position={[-textSubWidth / 2, textSettings.position[1] - 2 , textSettings.position[2]]} // Ajuster Y pour décaler le texte secondaire
-            curveSegments={12}
-            bevelEnabled
-            bevelThickness={0.02}
-            bevelSize={0.02}
-            bevelOffset={0}
-            bevelSegments={5}
-            scale={0.8}
-          >
-            <meshMatcapMaterial matcap={matcapTexture} />
-            Press Space
-          </Text3D>
+      <group
+        rotation-y={Math.PI * textSettings.rototationY}
+        rotation-x={Math.PI * textSettings.rotationX}
+      >
+        <Text3D
+          ref={textRef}
+          font="./fonts/helvetiker_regular.typeface.json"
+          position={[
+            -textWidth / 2,
+            textSettings.position[1],
+            textSettings.position[2],
+          ]}
+          curveSegments={12}
+          bevelEnabled
+          bevelThickness={0.02}
+          bevelSize={0.02}
+          bevelOffset={0}
+          bevelSegments={5}
+          scale={1.5}
+        >
+          <meshMatcapMaterial matcap={matcapTexture} />
+          Portfolio - @Jqn.art
+        </Text3D>
+        <Text3D
+          ref={textSubRef}
+          font="./fonts/helvetiker_regular.typeface.json"
+          position={[
+            -textSubWidth / 2,
+            textSettings.position[1] - 2,
+            textSettings.position[2],
+          ]}
+          curveSegments={12}
+          bevelEnabled
+          bevelThickness={0.02}
+          bevelSize={0.02}
+          bevelOffset={0}
+          bevelSegments={5}
+          scale={0.8}
+        >
+          <meshMatcapMaterial matcap={matcapTexture} />
+          Press Space
+        </Text3D>
       </group>
     </>
   );

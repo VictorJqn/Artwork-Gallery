@@ -4,33 +4,34 @@ import { TextureLoader } from "three";
 import { useControls } from "leva";
 import { MeshReflectorMaterial } from "@react-three/drei";
 import * as THREE from "three";
-import { Perf } from "r3f-perf";
 import { useSpring, animated } from "@react-spring/three";
+
 import Camera from "./Camera";
-import { Physics, RigidBody } from "@react-three/rapier";
-import loadingManager from "./LoadingManager"; // Importer votre gestionnaire de chargement
+import loadingManager from "./LoadingManager";
 import PottedPlant from "./PottedPlant";
 import TextGallery from "./TextGallery";
-
-// Liste des images pour les cadres
-const images = [
-  "./images/447.jpg",
-  "./images/car.jpg",
-  "./images/chairs.jpg",
-  "./images/lac.jpg",
-  "./images/montain.jpg",
-  "./images/pizza.jpg",
-  "./images/purple.jpg",
-  "./images/restaurant.jpg",
-  "./images/spain.jpg",
-  "./images/vegetation.jpg",
-];
+import { images } from "./ImagesData";
 
 export default function Gallery() {
+  const gallery = useRef<THREE.Group>(null);
+
+  const [targetRotation, setTargetRotation] = useState(0);
+  const { scene } = useThree(); // Accès à la scène principale
+  const spotLightTarget = useMemo(() => new THREE.Object3D(), []); // Memo pour conserver la même instance
+
   const { numElements, radius } = useControls("gallery", {
     numElements: { value: images.length, min: 1, max: 50, step: 1 },
     radius: { value: 7, min: 5, max: 20, step: 1 },
   });
+
+  const [hoveredArrows, setHoveredArrows] = useState({
+    left: Array(numElements).fill(false),
+    right: Array(numElements).fill(false),
+  });
+
+  const spotLight = useRef<THREE.SpotLight>(
+    null
+  ) as React.MutableRefObject<THREE.SpotLight>;
 
   const spotlightSettings = useControls("spotLight", {
     intensity: { value: 100, min: 0, max: 1000, step: 1, label: "Intensité" },
@@ -38,6 +39,13 @@ export default function Gallery() {
     angle: { value: 0.65, min: 0, max: 1, step: 0.01, label: "Angle" },
     penumbra: { value: 1, min: 0, max: 1, step: 0.01, label: "Pénombre" },
   });
+
+  const arrowStyle = (hovered: boolean) =>
+    useSpring({
+      scale: hovered ? [1.5, 1.5, 1] : [1, 1, 1],
+      emissiveIntensity: hovered ? 1 : 0,
+      config: { tension: 300, friction: 20 },
+    });
 
   const leftArrowTexture = useLoader(TextureLoader, "./images/left-arrow.png");
   const rightArrowTexture = useLoader(
@@ -51,7 +59,7 @@ export default function Gallery() {
     });
   }, []);
 
-  useEffect(() => {
+  useMemo(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowLeft") {
         rotateGallery(-1);
@@ -66,34 +74,33 @@ export default function Gallery() {
     };
   }, []);
 
-  const generatePositionsAndRotations = () => {
-    const positionsAndRotations: {
-      position: [number, number, number];
-      rotation: [number, number, number];
-    }[] = [];
+  const rotateGallery = (direction: number) => {
+    const angleStep = (Math.PI * 2) / numElements;
+    setTargetRotation((prev) => prev + direction * angleStep);
+  };
+
+  const positionsAndRotations = useMemo(() => {
+    const positions = [];
     for (let i = 0; i < numElements; i++) {
       const angle = (i / numElements) * Math.PI * 2;
       const x = Math.sin(angle) * radius;
       const z = Math.cos(angle) * radius;
-
       const rotationY = Math.atan2(x, z) + Math.PI;
-      positionsAndRotations.push({
-        position: [x, 0.2, z],
+      positions.push({
+        position: [x, 0.2, z] as [number, number, number],
         rotation: [0, rotationY, 0],
       });
     }
-    return positionsAndRotations;
-  };
+    return positions;
+  }, [numElements, radius]);
 
-  const positionsAndRotations = generatePositionsAndRotations();
-
-  const spotLight = useRef<THREE.SpotLight>(
-    null
-  ) as React.MutableRefObject<THREE.SpotLight>;
-
-  const gallery = useRef<THREE.Group>(null);
-
-  const [targetRotation, setTargetRotation] = useState(0);
+  useEffect(() => {
+    scene.add(spotLightTarget);
+    spotLightTarget.position.set(0, 1, 5);
+    return () => {
+      scene.remove(spotLightTarget);
+    };
+  }, [scene]);
 
   useFrame((_, delta) => {
     if (gallery.current) {
@@ -102,39 +109,10 @@ export default function Gallery() {
     }
   });
 
-  const { scene } = useThree(); // Accès à la scène principale
-  const spotLightTarget = useMemo(() => new THREE.Object3D(), []); // Memo pour conserver la même instance
-
-  useEffect(() => {
-    // Ajouter la target à la scène une seule fois
-    scene.add(spotLightTarget);
-    spotLightTarget.position.set(0, 1, 5); // Définir la position initiale
-    return () => {
-      scene.remove(spotLightTarget); // Nettoyage lors du démontage du composant
-    };
-  }, [scene]);
-
-  const rotateGallery = (direction: number) => {
-    const angleStep = (Math.PI * 2) / numElements;
-    setTargetRotation((prev) => prev + direction * angleStep);
-  };
-
-  const [hoveredArrows, setHoveredArrows] = useState({
-    left: Array(numElements).fill(false),
-    right: Array(numElements).fill(false),
-  });
-
-  // Créer une animation avec useSpring pour les flèches
-  const arrowStyle = (hovered: boolean) =>
-    useSpring({
-      scale: hovered ? [1.5, 1.5, 1] : [1, 1, 1],
-      emissiveIntensity: hovered ? 1 : 0,
-      config: { tension: 300, friction: 20 }, // Ajuster la fluidité
-    });
-
+ 
   return (
     <>
-      <Perf position="top-left" />
+      {/* <Perf position="top-left"d/> */}
       <spotLight
         position={[0, 2, 0]}
         intensity={spotlightSettings.intensity}
@@ -142,11 +120,11 @@ export default function Gallery() {
         angle={spotlightSettings.angle}
         penumbra={spotlightSettings.penumbra}
         ref={spotLight}
-        target={spotLightTarget} // Liaison correcte de la target
+        target={spotLightTarget}
       />
       <group ref={gallery}>
         {positionsAndRotations.map((item, index) => {
-          const texture = textures[index] ?? textures[0]; // Utiliser la texture en cache
+          const texture = textures[index] ?? textures[0];
 
           const leftArrowAnim = arrowStyle(hoveredArrows.left[index]);
           const rightArrowAnim = arrowStyle(hoveredArrows.right[index]);
@@ -155,9 +133,8 @@ export default function Gallery() {
             <group
               key={index}
               position={item.position}
-              rotation={item.rotation}
+              rotation={new THREE.Euler(...item.rotation)}
             >
-              {/* Flèche gauche */}
               <animated.mesh
                 position={[-1.8, 0, 0.5]}
                 onPointerOver={() => {
@@ -235,18 +212,13 @@ export default function Gallery() {
         })}
       </group>
       {/* Reflet du sol */}
-      <Physics>
-        <RigidBody type="fixed">
-          <mesh position-y={-1} scale={100} rotation-x={-Math.PI / 2}>
-            <planeGeometry />
-            <MeshReflectorMaterial resolution={1024} mirror={1} />
-          </mesh>
-        </RigidBody>
-        <Camera />
-        {/* <Football /> */}
-        <PottedPlant />
-        <TextGallery />
-      </Physics>
+      <mesh position-y={-1} scale={100} rotation-x={-Math.PI / 2}>
+        <planeGeometry />
+        <MeshReflectorMaterial resolution={1024} mirror={1} />
+      </mesh>
+      <Camera />
+      <PottedPlant />
+      <TextGallery />
     </>
   );
 }

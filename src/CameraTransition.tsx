@@ -5,25 +5,26 @@ import * as THREE from "three";
 
 export default function CameraTransition() {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const [targetPosition, setTargetPosition] = useState(new THREE.Vector3(0, 0, 2));
+  const [targetPosition, setTargetPosition] = useState(
+    new THREE.Vector3(0, 0, 2)
+  );
   const isTransitioningRef = useRef(false);
   const [isEntryScene, setIsEntryScene] = useState(true);
 
   useFrame(() => {
     if (cameraRef.current) {
-      cameraRef.current.lookAt(0, 0, 5); // Orienter la caméra vers [0, 0, 5]
+      cameraRef.current.lookAt(0, 0, 5);
     }
   });
 
   useEffect(() => {
     const handleSpacebar = (event: KeyboardEvent) => {
-      if (event.key === " " ) {
+      if (event.key === " " && !event.repeat) {
         isTransitioningRef.current = true;
 
         if (isEntryScene) {
           setIsEntryScene(false);
           setTargetPosition(new THREE.Vector3(0, 0, 2));
-          cameraRef.current?.lookAt(0, 0, 5);
         } else {
           setIsEntryScene(true);
           setTargetPosition(new THREE.Vector3(0, 10, -20));
@@ -50,16 +51,10 @@ export default function CameraTransition() {
     }
   });
 
-  return (
-    <>
-      {/* Ajouter une caméra de trois */}
-      <PerspectiveCamera
-        ref={cameraRef}
-        makeDefault // Remplace la caméra par défaut du Canvas
-        position={[0, 10, -20]} // Position initiale
-        fov={75} // Champ de vision
-      />
-      
-    </>
-  );
+  return <PerspectiveCamera
+    ref={cameraRef}
+    makeDefault 
+    position={[0, 10, -20]}
+    fov={75} 
+  />;
 }

@@ -8,16 +8,15 @@ import { Leva } from "leva";
 export default function Experience() {
   return (
     <>
-      <Leva collapsed />
+      <Leva hidden={true} />
 
       <Canvas shadows>
-        x <color attach="background" args={["#000000"]} />
+        <color attach="background" args={["#000000"]} />
         <Gallery />
         <CameraTransition />
         <EntryScene />
-        {/* <Cloud /> */}
         <Rain />
-        <ambientLight intensity={0.1} />
+        <ambientLight intensity={0.08} />
       </Canvas>
     </>
   );
