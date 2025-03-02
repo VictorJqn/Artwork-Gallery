@@ -34,7 +34,7 @@ export default function Gallery() {
 
   const { numElements, radius } = useControls("gallery", {
     numElements: { value: images.length, min: 1, max: 50, step: 1 },
-    radius: { value: isMobile ? 5 : 7, min: 5, max: 20, step: 1 },
+    radius: { value: 7, min: 5, max: 20, step: 1 },
   });
 
   const [hoveredArrows, setHoveredArrows] = useState({
@@ -48,14 +48,14 @@ export default function Gallery() {
 
   const spotlightSettings = useControls("spotLight", {
     intensity: {
-      value: isMobile ? 150 : 100,
+      value: 100,
       min: 0,
       max: 1000,
       step: 1,
       label: "Intensité",
     },
     distance: {
-      value: isMobile ? 12 : 10,
+      value: 10,
       min: 0,
       max: 100,
       step: 1,
@@ -129,7 +129,7 @@ export default function Gallery() {
 
   const rotateGallery = (direction: number) => {
     const angleStep = (Math.PI * 2) / numElements;
-    const rotationSpeed = isMobile ? 1.5 : 1; // Rotation plus rapide sur mobile
+    const rotationSpeed = 1; // Rotation plus rapide sur mobile
     setTargetRotation((prev) => prev + direction * angleStep * rotationSpeed);
   };
 

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 
 import Experience from "./Experience";
-import loadingManager from "./LoadingManager"; 
+import loadingManager from "./LoadingManager";
 import Loader from "./Loader";
 import "./index.css";
 
@@ -16,7 +16,7 @@ const App = () => {
       const progress = (itemsLoaded / itemsTotal) * 100;
       console.log(`Loading ${progress}%`);
       if (progress === 100) {
-        setIsLoading(false); 
+        setIsLoading(false);
       }
     };
   }, []);
@@ -24,7 +24,7 @@ const App = () => {
   const handleLoadingComplete = () => {
     setIsLoading(false);
     if (audioRef.current) {
-      audioRef.current.play();
+      audioRef.current.play().catch(console.error);
       setIsAudioStarted(true);
     }
   };
@@ -39,9 +39,9 @@ const App = () => {
           isLoading={isLoading}
         />
       ) : null}
-      <Experience />
+      <Experience isLoading={isLoading} isAudioStarted={isAudioStarted} />
     </>
   );
 };
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root") as HTMLElement).render(<App />);

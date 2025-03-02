@@ -29,6 +29,7 @@ export default function PottedPlant() {
     if (pottedPlant.scene) {
       pottedPlant.scene.traverse((child) => {
         if (child instanceof THREE.Mesh && child.material) {
+          child.material.color.setRGB(1, 1, 1);
           child.material.color.multiplyScalar(0.4);
           if (child.material.emissive) {
             child.material.emissiveIntensity = 0.1;
@@ -36,7 +37,7 @@ export default function PottedPlant() {
         }
       });
     }
-  }, []);
+  }, [pottedPlant.scene]);
 
   return (
     <>
