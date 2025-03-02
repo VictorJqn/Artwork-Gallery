@@ -8,4 +8,36 @@ body,
     width: 100%;
     height: 100%;
     background: black;
+    overflow: hidden;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Styles pour les éléments UI */
+.ui-element {
+    position: absolute;
+    z-index: 10;
+}
+
+/* Media queries pour différents appareils */
+@media screen and (max-width: 768px) {
+    html {
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    html {
+        font-size: 12px;
+    }
+}
+
+/* Désactiver le zoom sur mobile */
+@viewport {
+    width: device-width;
+    zoom: 1.0;
+}
+
+@-ms-viewport {
+    width: device-width;
 }

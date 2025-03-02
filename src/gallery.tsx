@@ -14,14 +14,27 @@ import { images } from "./ImagesData";
 
 export default function Gallery() {
   const gallery = useRef<THREE.Group>(null);
+  const touchStartX = useRef<number | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   const [targetRotation, setTargetRotation] = useState(0);
   const { scene } = useThree(); // Accès à la scène principale
   const spotLightTarget = useMemo(() => new THREE.Object3D(), []); // Memo pour conserver la même instance
 
+  // Détecter si l'appareil est mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   const { numElements, radius } = useControls("gallery", {
     numElements: { value: images.length, min: 1, max: 50, step: 1 },
-    radius: { value: 7, min: 5, max: 20, step: 1 },
+    radius: { value: isMobile ? 5 : 7, min: 5, max: 20, step: 1 },
   });
 
   const [hoveredArrows, setHoveredArrows] = useState({
@@ -34,8 +47,20 @@ export default function Gallery() {
   ) as React.MutableRefObject<THREE.SpotLight>;
 
   const spotlightSettings = useControls("spotLight", {
-    intensity: { value: 100, min: 0, max: 1000, step: 1, label: "Intensité" },
-    distance: { value: 10, min: 0, max: 100, step: 1, label: "Distance" },
+    intensity: {
+      value: isMobile ? 150 : 100,
+      min: 0,
+      max: 1000,
+      step: 1,
+      label: "Intensité",
+    },
+    distance: {
+      value: isMobile ? 12 : 10,
+      min: 0,
+      max: 100,
+      step: 1,
+      label: "Distance",
+    },
     angle: { value: 0.65, min: 0, max: 1, step: 0.01, label: "Angle" },
     penumbra: { value: 1, min: 0, max: 1, step: 0.01, label: "Pénombre" },
   });
@@ -59,7 +84,7 @@ export default function Gallery() {
     });
   }, []);
 
-  useMemo(() => {
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowLeft") {
         rotateGallery(-1);
@@ -68,15 +93,44 @@ export default function Gallery() {
       }
     };
 
+    // Gestion du swipe sur mobile
+    const handleTouchStart = (event: TouchEvent) => {
+      touchStartX.current = event.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (event: TouchEvent) => {
+      if (touchStartX.current === null) return;
+
+      const touchEndX = event.changedTouches[0].clientX;
+      const deltaX = touchEndX - touchStartX.current;
+
+      // Seuil minimum pour détecter un swipe
+      if (Math.abs(deltaX) > 50) {
+        rotateGallery(deltaX > 0 ? -1 : 1);
+      }
+
+      touchStartX.current = null;
+    };
+
     window.addEventListener("keydown", handleKeyDown);
+    if (isMobile) {
+      window.addEventListener("touchstart", handleTouchStart);
+      window.addEventListener("touchend", handleTouchEnd);
+    }
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
+      if (isMobile) {
+        window.removeEventListener("touchstart", handleTouchStart);
+        window.removeEventListener("touchend", handleTouchEnd);
+      }
     };
-  }, []);
+  }, [isMobile]);
 
   const rotateGallery = (direction: number) => {
     const angleStep = (Math.PI * 2) / numElements;
-    setTargetRotation((prev) => prev + direction * angleStep);
+    const rotationSpeed = isMobile ? 1.5 : 1; // Rotation plus rapide sur mobile
+    setTargetRotation((prev) => prev + direction * angleStep * rotationSpeed);
   };
 
   const positionsAndRotations = useMemo(() => {
@@ -87,12 +141,12 @@ export default function Gallery() {
       const z = Math.cos(angle) * radius;
       const rotationY = Math.atan2(x, z) + Math.PI;
       positions.push({
-        position: [x, 0.2, z] as [number, number, number],
+        position: [x, isMobile ? 0 : 0.2, z] as [number, number, number],
         rotation: [0, rotationY, 0],
       });
     }
     return positions;
-  }, [numElements, radius]);
+  }, [numElements, radius, isMobile]);
 
   useEffect(() => {
     scene.add(spotLightTarget);
@@ -104,12 +158,12 @@ export default function Gallery() {
 
   useFrame((_, delta) => {
     if (gallery.current) {
+      const rotationSpeed = isMobile ? 3.5 : 2.5;
       gallery.current.rotation.y +=
-        (targetRotation - gallery.current.rotation.y) * (delta * 2.5);
+        (targetRotation - gallery.current.rotation.y) * (delta * rotationSpeed);
     }
   });
 
- 
   return (
     <>
       {/* <Perf position="top-left"d/> */}
